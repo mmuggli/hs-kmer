@@ -2,6 +2,7 @@ module Main where
 
 import Lib
 import qualified Data.ByteString.Lazy.Char8 as L
+import qualified Data.Map as M
 import Data.List
 -- Some discussions on base data type and I/O:
 -- https://stackoverflow.com/questions/41656678/haskell-read-last-line-with-a-lazy-mmap
@@ -17,6 +18,9 @@ k = 4
 -- https://twitter.com/Helkafen/status/701473861351526400
 windows n xs = filter ((>= k) . L.length) $ map (L.take n) (L.tails xs)
 
+buildMap :: [L.ByteString] -> M.Map L.ByteString Int
+buildMap l = foldl f M.empty l
+             where f amap bs = M.insertWith (+) bs 1 amap
 
                
 main :: IO ()
@@ -26,8 +30,10 @@ main =  do contents <- L.getContents
            let groups2 = filter (('>' /=) . L.head . head) groups1
            let groups3 = map L.concat groups2
            let kmers = concat $ map (windows k) groups3
-           let counted = map (\x -> (length x, head x)) $ group . sort $ kmers
-           mapM (putStrLn . show) counted
+           let mymap = buildMap kmers
+--           let counted = map (\x -> (length x, head x)) $ group . sort $ kmers
+           putStrLn (show $ M.size mymap)
+--           mapM (putStrLn . show) counted
 --           mapM (putStrLn . show) kmers
 --           putStrLn (show kmers)
            return ()

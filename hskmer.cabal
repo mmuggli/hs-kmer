@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2ecd59d0080c21f4ed498db07d4d623b8d73d66dc6a7f5a1a15330f311fb6ad1
+-- hash: 0c2d3598458ce0572464e2ef69c1b7b5462b4742d573c9bca7d6399e38f7bea9
 
 name:           hskmer
 version:        0.1.0.0
@@ -35,6 +35,7 @@ library
   build-depends:
       base >=4.7 && <5
     , bytestring
+    , containers
   default-language: Haskell2010
 
 executable hskmer-exe
@@ -47,6 +48,7 @@ executable hskmer-exe
   build-depends:
       base >=4.7 && <5
     , bytestring
+    , containers
     , hskmer
   default-language: Haskell2010
 
@@ -61,5 +63,6 @@ test-suite hskmer-test
   build-depends:
       base >=4.7 && <5
     , bytestring
+    , containers
     , hskmer
   default-language: Haskell2010
