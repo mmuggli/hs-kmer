@@ -13,11 +13,19 @@ import Data.List
 -- * fusion
 -- * multi-threading
 
+k = 32
+-- https://twitter.com/Helkafen/status/701473861351526400
+windows n xs = filter ((>= k) . L.length) $ map (L.take n) (L.tails xs)
+
+
+               
 main :: IO ()
 main =  do contents <- L.getContents
            let mylines = L.lines contents
            let groups1 = groupBy (\a b -> ((L.head a) == '>') == ((L.head b) == '>')) mylines
            let groups2 = filter (('>' /=) . L.head . head) groups1
            let groups3 = map L.concat groups2
-           putStrLn (show groups3)
+           let kmers = concat $ map (windows k) groups3
+           mapM (putStrLn . show) kmers
+--           putStrLn (show kmers)
            return ()
