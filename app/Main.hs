@@ -36,7 +36,7 @@ import Data.Word
 
 k = 31
 -- https://twitter.com/Helkafen/status/701473861351526400
-windows n xs = filter ((>= k) . length) $ map (take n) (tails xs)
+windows n xs = filter ((>= k) . L.length) $ map (L.take n) (L.tails xs)
 
 
 type MapType = IM.IntMap Int 
@@ -62,8 +62,8 @@ intOfBase 'G' = 2
 intOfBase 'T' = 3
 intOfBase _ = error "Non DNA letter found"                
                
-encodeBases :: String -> Int                
-encodeBases bases = foldl'  (\a b -> (a `shiftL` 2) .|. (intOfBase b)) 0 $  bases                
+encodeBases :: L.ByteString -> Int                
+encodeBases bases = L.foldl  (\a b -> (a `shiftL` 2) .|. (intOfBase b)) 0 $  bases                
                                     
 
 complementOfBase :: Char -> Char
@@ -77,12 +77,12 @@ data FASTALine  = Header  | Sequence  | QualDelim | Quality
                   deriving (Eq, Show)
                            
 -- Ghetto parsing, refactor to be less repetitive
-tag :: FASTALine -> [(String, Int)] -> [(FASTALine, String)]
+tag :: FASTALine -> [(L.ByteString, Int)] -> [(FASTALine, L.ByteString)]
 tag _ [] = []       
 tag lastlinetype ((line, lineNo):lines) = if (lineNo `mod` 10000) == 0
                                           then trace ("Line: " ++ (show lineNo)) $ tagLine ((line, lineNo):lines)
                                           else tagLine ((line, lineNo):lines)
-    where tagLine ((line, lineNo):lines) = case (head line) of
+    where tagLine ((line, lineNo):lines) = case (L.head line) of
                                           '>' -> (Header, line) : tag Header lines
                                           '@' -> (Header, line) : tag Header lines
                                           '+' -> (QualDelim, line) : tag QualDelim lines
@@ -99,11 +99,11 @@ canonicalize x = let rc = revcomp x in
               else x
                   
                
-revcomp :: String -> String
-revcomp bs = reverse $ map complementOfBase bs
+revcomp :: L.ByteString -> L.ByteString
+revcomp bs = L.reverse $ L.map complementOfBase bs
 
-noNs :: String -> Bool
-noNs bs = case find ('N' == ) bs of
+noNs :: L.ByteString -> Bool
+noNs bs = case L.find ('N' == ) bs of
             Just _ -> False
             Nothing -> True
 
@@ -131,15 +131,15 @@ showHist amap = map f [1..256]
                               Nothing -> putStrLn (show i ++ "\t0")
 
 main :: IO ()
-main =  do contents <- getContents
-           let mylines = lines contents
+main =  do contents <- L.getContents
+           let mylines = L.lines contents
            let numberedLines = zip mylines [1..]
            let taggedLines = tag Quality numberedLines
            let groupedByTag = groupBy equalTags taggedLines
                    where
                      equalTags (tag1, _) (tag2, _) = tag1 == tag2
            let sequenceGroups = filter ((Sequence ==)  . fst . head) groupedByTag
-           let sequences = map (concat . (fmap snd))  sequenceGroups
+           let sequences = map (L.concat . (fmap snd))  sequenceGroups
            let kmers = concat $ map (windows k) sequences
            let filteredKmers = filter noNs kmers
            let canonicalKmers = fmap canonicalize filteredKmers
