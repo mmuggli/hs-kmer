@@ -4,7 +4,8 @@ import Lib
 import qualified Data.ByteString.Char8 as L
 import qualified Data.ByteString.Lazy.UTF8 as BSLU
 --import qualified Data.Map as M
-import qualified Data.Map.Strict as M    
+import qualified Data.IntMap.Strict as IM
+import qualified Data.Map as M
 import Data.List
 import qualified Math.Combinatorics.Multiset as MS
 import Debug.Trace
@@ -37,19 +38,17 @@ k = 31
 -- https://twitter.com/Helkafen/status/701473861351526400
 windows n xs = filter ((>= k) . length) $ map (take n) (tails xs)
 
--- try https://stackoverflow.com/questions/13758704/haskell-is-there-a-standard-function-to-provide-a-count-of-each-item-in-a-list               
-countElems :: (Ord a) => [a] -> M.Map a Int
-countElems = M.fromListWith (+) . flip zip (repeat 1)
 
-type MapType = M.Map Int Int
+type MapType = IM.IntMap Int 
 
 --buildMap = countElems
 buildMap ::  [Int] -> MapType
-buildMap bsl = foldl' f M.empty bsl
-             where f amap bs = let res = M.insertWith (+) bs 1 amap in
-                               if M.size amap `mod` 100000 == 0
-                               then trace ("Map entries: " ++ ( show $ M.size amap)) res
-                               else res
+buildMap il = IM.fromListWith (+) $ zip il $ repeat 1
+-- buildMap bsl = foldl' f M.empty bsl
+--              where f amap bs = let res = M.insertWith (+) bs 1 amap in
+--                                if M.size amap `mod` 100000 == 0
+--                                then trace ("Map entries: " ++ ( show $ M.size amap)) res
+--                                else res
 -- intOfBase :: Word8 -> Int
 -- intOfBase 65 = 0
 -- intOfBase 67 = 1
@@ -116,8 +115,14 @@ noNs bs = case find ('N' == ) bs of
 -- gcCount :: L.ByteString -> Int
 -- gcCount bs = L.fold (\elem accum -> 
 
+-- try https://stackoverflow.com/questions/13758704/haskell-is-there-a-standard-function-to-provide-a-count-of-each-item-in-a-list
+-- countElems :: (Ord a) => [a] -> M.Map Int Int
+countElems :: [Int] -> M.Map Int Int
+countElems = M.fromListWith (+) . flip zip (repeat 1)
+
+
 hist :: MapType -> M.Map Int Int
-hist amap = countElems $ map snd $ M.toList amap
+hist amap = countElems $ map snd $ IM.toList amap
 
 showHist :: M.Map Int Int -> [IO ()]
 showHist amap = map f [1..256]
@@ -143,7 +148,7 @@ main =  do contents <- getContents
            let mymap = buildMap encodedKmers
 
 
-           putStrLn (show $ M.size mymap) --
+           putStrLn (show $ IM.size mymap) --
            --putStrLn (show $ hist mymap)
            sequence $ showHist $ hist mymap
 
