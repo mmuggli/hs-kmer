@@ -34,7 +34,9 @@ packages:
 # These entries can reference officially published versions as well as
 # forks / in-progress versions pinned to a git hash. For example:
 #
-# extra-deps:
+extra-deps:
+- multiset-comb-0.2.4.1@sha256:af49e6c34f759616f12d64b137f0954e992094e2a6904d1cacef52f23e54b2aa,1183
+
 # - acme-missiles-0.3
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a

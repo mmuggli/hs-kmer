@@ -24,6 +24,8 @@ dependencies:
 - bytestring
 - containers
 - hashmap
+- multiset-comb
+
 
 library:
   source-dirs: src
