@@ -4,7 +4,7 @@ import Lib
 import qualified Data.ByteString.Char8 as L
 import qualified Data.ByteString.Lazy.UTF8 as BSLU
 --import qualified Data.Map as M
-import qualified Data.IntMap.Strict as M    
+import qualified Data.Map.Strict as M    
 import Data.List
 import qualified Math.Combinatorics.Multiset as MS
 import Debug.Trace
@@ -35,17 +35,19 @@ import Data.Word
 
 k = 31
 -- https://twitter.com/Helkafen/status/701473861351526400
-windows n xs = filter ((>= k) . L.length) $ map (L.take n) (L.tails xs)
+windows n xs = filter ((>= k) . length) $ map (take n) (tails xs)
 
 -- try https://stackoverflow.com/questions/13758704/haskell-is-there-a-standard-function-to-provide-a-count-of-each-item-in-a-list               
--- countElems :: (Ord a) => [a] -> M.Map a Int
--- countElems = M.fromListWith (+) . flip zip (repeat 1)
+countElems :: (Ord a) => [a] -> M.Map a Int
+countElems = M.fromListWith (+) . flip zip (repeat 1)
+
+type MapType = M.Map Int Int
 
 --buildMap = countElems
-buildMap ::  [Int] -> M.IntMap  Int
+buildMap ::  [Int] -> MapType
 buildMap bsl = foldl' f M.empty bsl
              where f amap bs = let res = M.insertWith (+) bs 1 amap in
-                               if M.size amap `mod` 10000 == 0
+                               if M.size amap `mod` 100000 == 0
                                then trace ("Map entries: " ++ ( show $ M.size amap)) res
                                else res
 -- intOfBase :: Word8 -> Int
@@ -61,8 +63,8 @@ intOfBase 'G' = 2
 intOfBase 'T' = 3
 intOfBase _ = error "Non DNA letter found"                
                
-encodeBases :: L.ByteString -> Int                
-encodeBases bases = L.foldl  (\a b -> (a `shiftL` 2) .|. (intOfBase b)) 0 $  bases                
+encodeBases :: String -> Int                
+encodeBases bases = foldl'  (\a b -> (a `shiftL` 2) .|. (intOfBase b)) 0 $  bases                
                                     
 
 complementOfBase :: Char -> Char
@@ -76,12 +78,12 @@ data FASTALine  = Header  | Sequence  | QualDelim | Quality
                   deriving (Eq, Show)
                            
 -- Ghetto parsing, refactor to be less repetitive
-tag :: FASTALine -> [(L.ByteString, Int)] -> [(FASTALine, L.ByteString)]
+tag :: FASTALine -> [(String, Int)] -> [(FASTALine, String)]
 tag _ [] = []       
-tag lastlinetype ((line, lineNo):lines) = if (lineNo `mod` 1000) == 0
-                                          then trace ("Line " ++ (show lineNo)) $ tagLine ((line, lineNo):lines)
+tag lastlinetype ((line, lineNo):lines) = if (lineNo `mod` 10000) == 0
+                                          then trace ("Line: " ++ (show lineNo)) $ tagLine ((line, lineNo):lines)
                                           else tagLine ((line, lineNo):lines)
-    where tagLine ((line, lineNo):lines) = case (L.head line) of
+    where tagLine ((line, lineNo):lines) = case (head line) of
                                           '>' -> (Header, line) : tag Header lines
                                           '@' -> (Header, line) : tag Header lines
                                           '+' -> (QualDelim, line) : tag QualDelim lines
@@ -98,11 +100,11 @@ canonicalize x = let rc = revcomp x in
               else x
                   
                
-revcomp :: L.ByteString -> L.ByteString
-revcomp bs = L.reverse $ L.map complementOfBase bs
+revcomp :: String -> String
+revcomp bs = reverse $ map complementOfBase bs
 
-noNs :: L.ByteString -> Bool
-noNs bs = case L.find ('N' == ) bs of
+noNs :: String -> Bool
+noNs bs = case find ('N' == ) bs of
             Just _ -> False
             Nothing -> True
 
@@ -114,16 +116,25 @@ noNs bs = case L.find ('N' == ) bs of
 -- gcCount :: L.ByteString -> Int
 -- gcCount bs = L.fold (\elem accum -> 
 
+hist :: MapType -> M.Map Int Int
+hist amap = countElems $ map snd $ M.toList amap
+
+showHist :: M.Map Int Int -> [IO ()]
+showHist amap = map f [1..256]
+                where f i = case amap M.!? i of
+                              Just c -> putStrLn (show i ++ "\t" ++ show c)
+                              Nothing -> putStrLn (show i ++ "\t0")
+
 main :: IO ()
-main =  do contents <- L.getContents
-           let mylines = L.lines contents
+main =  do contents <- getContents
+           let mylines = lines contents
            let numberedLines = zip mylines [1..]
            let taggedLines = tag Quality numberedLines
            let groupedByTag = groupBy equalTags taggedLines
                    where
                      equalTags (tag1, _) (tag2, _) = tag1 == tag2
            let sequenceGroups = filter ((Sequence ==)  . fst . head) groupedByTag
-           let sequences = map (L.concat . (fmap snd))  sequenceGroups
+           let sequences = map (concat . (fmap snd))  sequenceGroups
            let kmers = concat $ map (windows k) sequences
            let filteredKmers = filter noNs kmers
            let canonicalKmers = fmap canonicalize filteredKmers
@@ -133,6 +144,7 @@ main =  do contents <- L.getContents
 
 
            putStrLn (show $ M.size mymap) --
-
+           --putStrLn (show $ hist mymap)
+           sequence $ showHist $ hist mymap
 
            return ()
