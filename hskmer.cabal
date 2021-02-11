@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f2d6289d2469b2a00a39ae6eda8aa08ea31465c444fb43677c2355a23513408c
+-- hash: b8981d0dd92fc996af92afd31095dd900198af2ca1f008719c497ac5ec780af6
 
 name:           hskmer
 version:        0.1.0.0
@@ -38,6 +38,7 @@ library
     , containers
     , hashmap
     , multiset-comb
+    , utf8-string
   default-language: Haskell2010
 
 executable hskmer-exe
@@ -54,6 +55,7 @@ executable hskmer-exe
     , hashmap
     , hskmer
     , multiset-comb
+    , utf8-string
   default-language: Haskell2010
 
 test-suite hskmer-test
@@ -71,4 +73,5 @@ test-suite hskmer-test
     , hashmap
     , hskmer
     , multiset-comb
+    , utf8-string
   default-language: Haskell2010
