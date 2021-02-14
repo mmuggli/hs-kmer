@@ -6,7 +6,8 @@ import qualified Data.ByteString.Lazy.UTF8 as BSLU
 --import qualified Data.Map as M
 --import qualified Data.IntMap.Strict as IM
 -- import Data.Map.Unboxed.Unboxed
-import qualified Data.Map.Unboxed.Unboxed as IM
+--import qualified Data.Map.Unboxed.Unboxed as IM
+import qualified Data.IntMap as IM
 import qualified Data.Map as M
 import Data.List
 import qualified Math.Combinatorics.Multiset as MS
@@ -43,15 +44,15 @@ windows n xs = filter ((>= k) . L.length) $ map (L.take n) (L.tails xs)
 --windows n xs = take ((length xs) - n) $ map (L.take n) (L.tails xs)               
 
 --windows2 n xs =  fmap (\a -> (drop a (take n))   [0..(length xs) - n] 
-type MapType = IM.Map Int Word8
+type MapType = IM.IntMap Word8
 
 --buildMap = countElems
 buildMap ::  [Int] -> MapType
-buildMap il = IM.fromListAppend  $ zip il $ repeat 1
--- buildMap bsl = foldl' f M.empty bsl
---              where f amap bs = let res = M.insertWith (+) bs 1 amap in
---                                if M.size amap `mod` 100000 == 0
---                                then trace ("Map entries: " ++ ( show $ M.size amap)) res
+buildMap il = IM.fromListWith (+)  $ zip il $ repeat 1
+-- buildMap bsl = foldl' f IM.empty bsl
+--              where f amap bs = let res = IM.insertWith (+) bs 1 amap in
+--                                if IM.size amap `mod` 100000 == 0
+--                                then trace ("Map entries: " ++ ( show $ IM.size amap)) res
 --                                else res
 -- intOfBase :: Word8 -> Int
 -- intOfBase 65 = 0
