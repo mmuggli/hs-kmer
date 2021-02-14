@@ -26,6 +26,7 @@ dependencies:
 - hashmap
 - multiset-comb
 - utf8-string
+- primitive-containers
 
 library:
   source-dirs: src

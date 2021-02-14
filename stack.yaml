@@ -36,6 +36,9 @@ packages:
 #
 extra-deps:
 - multiset-comb-0.2.4.1@sha256:af49e6c34f759616f12d64b137f0954e992094e2a6904d1cacef52f23e54b2aa,1183
+- primitive-containers-0.4.1@sha256:bfd76a8e550d86dc41aca1a96cbadc76636c2f60ecf3695601709fe2f3412c02,3310
+- contiguous-0.5.1@sha256:902b74d8e369fef384c20b116c3c81e65eca2672d79f525ab374fe98ee50e9d4,1757
+- primitive-sort-0.1.0.0@sha256:631f605f66d310e5677f7e32c87a0ea4b2d60efc2073db6b769b18b69212f798,2011
 
 # - acme-missiles-0.3
 # - git: https://github.com/commercialhaskell/stack.git

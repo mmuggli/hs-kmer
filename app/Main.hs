@@ -1,10 +1,12 @@
 module Main where
 
 import Lib
-import qualified Data.ByteString.Char8 as L
+import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.ByteString.Lazy.UTF8 as BSLU
 --import qualified Data.Map as M
-import qualified Data.IntMap.Strict as IM
+--import qualified Data.IntMap.Strict as IM
+-- import Data.Map.Unboxed.Unboxed
+import qualified Data.Map.Unboxed.Unboxed as IM
 import qualified Data.Map as M
 import Data.List
 import qualified Math.Combinatorics.Multiset as MS
@@ -38,12 +40,14 @@ k = 31
 -- https://twitter.com/Helkafen/status/701473861351526400
 windows n xs = filter ((>= k) . L.length) $ map (L.take n) (L.tails xs)
 
+--windows n xs = take ((length xs) - n) $ map (L.take n) (L.tails xs)               
 
-type MapType = IM.IntMap Int 
+--windows2 n xs =  fmap (\a -> (drop a (take n))   [0..(length xs) - n] 
+type MapType = IM.Map Int Word8
 
 --buildMap = countElems
 buildMap ::  [Int] -> MapType
-buildMap il = IM.fromListWith (+) $ zip il $ repeat 1
+buildMap il = IM.fromListAppend  $ zip il $ repeat 1
 -- buildMap bsl = foldl' f M.empty bsl
 --              where f amap bs = let res = M.insertWith (+) bs 1 amap in
 --                                if M.size amap `mod` 100000 == 0
@@ -55,15 +59,23 @@ buildMap il = IM.fromListWith (+) $ zip il $ repeat 1
 -- intOfBase 71 = 2
 -- intOfBase 84 = 3
 
+instance Semigroup Word8 where
+    (<>) a b = let bigA = fromIntegral a :: Word16
+                   bigB = fromIntegral b :: Word16
+               in
+                 if (bigA + bigB) > 255 then 255 else a + b
+
 intOfBase :: Char -> Int
 intOfBase 'A' = 0
 intOfBase 'C' = 1
 intOfBase 'G' = 2
 intOfBase 'T' = 3
 intOfBase _ = error "Non DNA letter found"                
-               
+
+
+
 encodeBases :: L.ByteString -> Int                
-encodeBases bases = L.foldl  (\a b -> (a `shiftL` 2) .|. (intOfBase b)) 0 $  bases                
+encodeBases bases = L.foldl  (\a b -> (a `shiftL` 2) .|. intOfBase b) 0  bases                                    
                                     
 
 complementOfBase :: Char -> Char
@@ -80,18 +92,20 @@ data FASTALine  = Header  | Sequence  | QualDelim | Quality
 tag :: FASTALine -> [(L.ByteString, Int)] -> [(FASTALine, L.ByteString)]
 tag _ [] = []       
 tag lastlinetype ((line, lineNo):lines) = if (lineNo `mod` 10000) == 0
-                                          then trace ("Line: " ++ (show lineNo)) $ tagLine ((line, lineNo):lines)
+                                          then trace ("Line: " ++ show lineNo) $ tagLine ((line, lineNo):lines)
                                           else tagLine ((line, lineNo):lines)
-    where tagLine ((line, lineNo):lines) = case (L.head line) of
+    where tagLine ((line, lineNo):lines) = case L.head line of
                                           '>' -> (Header, line) : tag Header lines
                                           '@' -> (Header, line) : tag Header lines
                                           '+' -> (QualDelim, line) : tag QualDelim lines
                                           otherwise -> case lastlinetype of
-                                                 Header -> (Sequence, line) : ( tag Sequence lines)
-                                                 Sequence -> (Sequence, line) : ( tag Sequence lines )
-                                                 QualDelim -> (Quality, line) : ( tag Quality lines )
-                                                 Quality -> (Quality, line) : ( tag Quality lines )
-    
+                                                 Header -> (Sequence, line) :  tag Sequence lines
+                                                 Sequence -> (Sequence, line) :  tag Sequence lines 
+                                                 QualDelim -> (Quality, line) :  tag Quality lines 
+                                                 Quality -> (Quality, line) :  tag Quality lines 
+
+-- TODO explore my two instruction revcomp idea. Is it compatible with trie oriented data structures?                                                            
+-- TODO convert a sequence to binary, generate the revcomp of said binary (at the same time?) and then slide two sets of windows over them.
 -- TODO we should be able to decide if the revcomp is canonical without computing the entire revcomp, do that               
 canonicalize x = let rc = revcomp x in
               if rc < x
@@ -117,15 +131,15 @@ noNs bs = case L.find ('N' == ) bs of
 
 -- try https://stackoverflow.com/questions/13758704/haskell-is-there-a-standard-function-to-provide-a-count-of-each-item-in-a-list
 -- countElems :: (Ord a) => [a] -> M.Map Int Int
-countElems :: [Int] -> M.Map Int Int
+countElems :: [Word8] -> M.Map Word8 Int
 countElems = M.fromListWith (+) . flip zip (repeat 1)
 
 
-hist :: MapType -> M.Map Int Int
+hist :: MapType -> M.Map Word8 Int
 hist amap = countElems $ map snd $ IM.toList amap
 
-showHist :: M.Map Int Int -> [IO ()]
-showHist amap = map f [1..256]
+showHist :: M.Map Word8 Int -> [IO ()]
+showHist amap = map f [1..255]
                 where f i = case amap M.!? i of
                               Just c -> putStrLn (show i ++ "\t" ++ show c)
                               Nothing -> putStrLn (show i ++ "\t0")
@@ -139,17 +153,17 @@ main =  do contents <- L.getContents
                    where
                      equalTags (tag1, _) (tag2, _) = tag1 == tag2
            let sequenceGroups = filter ((Sequence ==)  . fst . head) groupedByTag
-           let sequences = map (L.concat . (fmap snd))  sequenceGroups
-           let kmers = concat $ map (windows k) sequences
+           let sequences = map (L.concat . fmap snd)  sequenceGroups
+           let kmers = concatMap  (windows k) sequences
            let filteredKmers = filter noNs kmers
            let canonicalKmers = fmap canonicalize filteredKmers
 
            let encodedKmers = fmap encodeBases  canonicalKmers
            let mymap = buildMap encodedKmers
 
+           print (IM.size mymap)
 
-           putStrLn (show $ IM.size mymap) --
            --putStrLn (show $ hist mymap)
-           sequence $ showHist $ hist mymap
+           sequence_ $ showHist $ hist mymap
 
-           return ()
+
