@@ -7,7 +7,7 @@ import qualified Data.ByteString.Lazy.UTF8 as BSLU
 --import qualified Data.IntMap.Strict as IM
 -- import Data.Map.Unboxed.Unboxed
 --import qualified Data.Map.Unboxed.Unboxed as IM
-import qualified Data.IntMap as IM
+import qualified Data.IntMap.Strict as IM
 import qualified Data.Map as M
 import Data.List
 import qualified Math.Combinatorics.Multiset as MS
