@@ -48,7 +48,7 @@ type MapType = IM.IntMap Word8
 
 --buildMap = countElems
 buildMap ::  [Int] -> MapType
-buildMap il = IM.fromListWith (+)  $ zip il $ repeat 1
+buildMap il = IM.fromListWith (\a b -> if a + b > 255 then 255 else a + b)  $ zip il $ repeat 1
 -- buildMap bsl = foldl' f IM.empty bsl
 --              where f amap bs = let res = IM.insertWith (+) bs 1 amap in
 --                                if IM.size amap `mod` 100000 == 0
