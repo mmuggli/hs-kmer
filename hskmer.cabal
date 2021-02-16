@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5941ef04bb8db7c3974cb80962981fd9e653c4627c5f2cd02e045bbb085ebe60
+-- hash: 02d8768591a01a6c1a4e8b76032c5d252bce2c678a39095456cf350361fc485b
 
 name:           hskmer
 version:        0.1.0.0
@@ -37,6 +37,7 @@ library
       base >=4.7 && <5
     , bytestring
     , containers
+    , group-with
     , hashmap
     , multiset-comb
     , primitive-containers
@@ -54,6 +55,7 @@ executable hskmer-exe
       base >=4.7 && <5
     , bytestring
     , containers
+    , group-with
     , hashmap
     , hskmer
     , multiset-comb
@@ -73,6 +75,7 @@ test-suite hskmer-test
       base >=4.7 && <5
     , bytestring
     , containers
+    , group-with
     , hashmap
     , hskmer
     , multiset-comb

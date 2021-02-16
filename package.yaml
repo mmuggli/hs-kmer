@@ -27,6 +27,7 @@ dependencies:
 - multiset-comb
 - utf8-string
 - primitive-containers
+- group-with
 
 library:
   source-dirs: src

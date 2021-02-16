@@ -15,6 +15,8 @@ import Debug.Trace
 import Data.Bits
 import Data.Word
 import qualified FastaParse as FP
+import Control.GroupWith
+import Data.Maybe
 -- https://stackoverflow.com/questions/3710976/counting-unique-elements-in-a-list
 
 --countElems4 = MS.toCounts . MS.fromList
@@ -42,24 +44,11 @@ k = 31
 -- https://twitter.com/Helkafen/status/701473861351526400
 windows n xs = filter ((>= k) . L.length) $ map (L.take n) (L.tails xs)
 
---windows n xs = take ((length xs) - n) $ map (L.take n) (L.tails xs)               
-
---windows2 n xs =  fmap (\a -> (drop a (take n))   [0..(length xs) - n] 
 type MapType = IM.IntMap Word8
 
 --buildMap = countElems
 buildMap ::  [Int] -> MapType
 buildMap il = IM.fromListWith (\a b -> if a + b > 255 then 255 else a + b)  $ zip il $ repeat 1
--- buildMap bsl = foldl' f IM.empty bsl
---              where f amap bs = let res = IM.insertWith (+) bs 1 amap in
---                                if IM.size amap `mod` 100000 == 0
---                                then trace ("Map entries: " ++ ( show $ IM.size amap)) res
---                                else res
--- intOfBase :: Word8 -> Int
--- intOfBase 65 = 0
--- intOfBase 67 = 1
--- intOfBase 71 = 2
--- intOfBase 84 = 3
 
 instance Semigroup Word8 where
     (<>) a b = let bigA = fromIntegral a :: Word16
@@ -100,17 +89,8 @@ revcomp :: L.ByteString -> L.ByteString
 revcomp bs = L.reverse $ L.map complementOfBase bs
 
 noNs :: L.ByteString -> Bool
-noNs bs = case L.find ('N' == ) bs of
-            Just _ -> False
-            Nothing -> True
+noNs bs = isNothing $ L.find ('N' == ) bs 
 
--- gcCount :: String -> Int -> Int
--- gcCount (c:cs) gc = if c == 'G' || c == 'C'
---                       then gcCount cs (gc + 1)
---                       else gcCount cs gc
-
--- gcCount :: L.ByteString -> Int
--- gcCount bs = L.fold (\elem accum -> 
 
 -- try https://stackoverflow.com/questions/13758704/haskell-is-there-a-standard-function-to-provide-a-count-of-each-item-in-a-list
 -- countElems :: (Ord a) => [a] -> M.Map Int Int
@@ -129,14 +109,9 @@ showHist amap = map f [1..255]
 
 main :: IO ()
 main =  do contents <- L.getContents
-           let mylines = L.lines contents
-           let numberedLines = zip mylines [1..]
-           let taggedLines = FP.tag FP.Quality numberedLines
-           let groupedByTag = groupBy equalTags taggedLines
-                   where
-                     equalTags (tag1, _) (tag2, _) = tag1 == tag2
-           let sequenceGroups = filter ((FP.Sequence ==)  . fst . head) groupedByTag
-           let sequences = map (L.concat . fmap snd)  sequenceGroups
+           let sequences =  filter notHeader (L.concat <$> groupBy sameHeaderness (L.lines  contents))
+                           where sameHeaderness = (\a b -> (L.head a == '>') == (L.head b == '>'))
+                                 notHeader = ( (/= '>') .  L.head )
            let kmers = concatMap  (windows k) sequences
            let filteredKmers = filter noNs kmers
            let canonicalKmers = fmap canonicalize filteredKmers
