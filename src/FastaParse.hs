@@ -1,4 +1,4 @@
-module FastaParse (FASTALine, tag) where
+module FastaParse (FASTALine(Quality, Sequence), tag) where
 
 import qualified Data.ByteString.Lazy.Char8 as L
 import Debug.Trace

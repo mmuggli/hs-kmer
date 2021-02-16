@@ -14,6 +14,7 @@ import qualified Math.Combinatorics.Multiset as MS
 import Debug.Trace
 import Data.Bits
 import Data.Word
+import qualified FastaParse as FP
 -- https://stackoverflow.com/questions/3710976/counting-unique-elements-in-a-list
 
 --countElems4 = MS.toCounts . MS.fromList
@@ -86,25 +87,6 @@ complementOfBase 'A' = 'T'
 complementOfBase 'T' = 'A'
 complementOfBase _ = error "Non DNA letter found"
 
-data FASTALine  = Header  | Sequence  | QualDelim | Quality
-                  deriving (Eq, Show)
-                           
--- Ghetto parsing, refactor to be less repetitive
-tag :: FASTALine -> [(L.ByteString, Int)] -> [(FASTALine, L.ByteString)]
-tag _ [] = []       
-tag lastlinetype ((line, lineNo):lines) = if (lineNo `mod` 10000) == 0
-                                          then trace ("Line: " ++ show lineNo) $ tagLine ((line, lineNo):lines)
-                                          else tagLine ((line, lineNo):lines)
-    where tagLine ((line, lineNo):lines) = case L.head line of
-                                          '>' -> (Header, line) : tag Header lines
-                                          '@' -> (Header, line) : tag Header lines
-                                          '+' -> (QualDelim, line) : tag QualDelim lines
-                                          otherwise -> case lastlinetype of
-                                                 Header -> (Sequence, line) :  tag Sequence lines
-                                                 Sequence -> (Sequence, line) :  tag Sequence lines 
-                                                 QualDelim -> (Quality, line) :  tag Quality lines 
-                                                 Quality -> (Quality, line) :  tag Quality lines 
-
 -- TODO explore my two instruction revcomp idea. Is it compatible with trie oriented data structures?                                                            
 -- TODO convert a sequence to binary, generate the revcomp of said binary (at the same time?) and then slide two sets of windows over them.
 -- TODO we should be able to decide if the revcomp is canonical without computing the entire revcomp, do that               
@@ -149,11 +131,11 @@ main :: IO ()
 main =  do contents <- L.getContents
            let mylines = L.lines contents
            let numberedLines = zip mylines [1..]
-           let taggedLines = tag Quality numberedLines
+           let taggedLines = FP.tag FP.Quality numberedLines
            let groupedByTag = groupBy equalTags taggedLines
                    where
                      equalTags (tag1, _) (tag2, _) = tag1 == tag2
-           let sequenceGroups = filter ((Sequence ==)  . fst . head) groupedByTag
+           let sequenceGroups = filter ((FP.Sequence ==)  . fst . head) groupedByTag
            let sequences = map (L.concat . fmap snd)  sequenceGroups
            let kmers = concatMap  (windows k) sequences
            let filteredKmers = filter noNs kmers
