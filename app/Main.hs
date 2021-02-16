@@ -79,15 +79,11 @@ complementOfBase _ = error "Non DNA letter found"
 -- TODO explore my two instruction revcomp idea. Is it compatible with trie oriented data structures?                                                            
 -- TODO convert a sequence to binary, generate the revcomp of said binary (at the same time?) and then slide two sets of windows over them.
 -- TODO we should be able to decide if the revcomp is canonical without computing the entire revcomp, do that               
-canonicalize x = let rc = revcomp x in
-              if rc < x
-              then rc
-              else x
-                  
-               
 revcomp :: L.ByteString -> L.ByteString
 revcomp bs = L.reverse $ L.map complementOfBase bs
 
+canonicalize x =  min x (revcomp x)
+                  
 noNs :: L.ByteString -> Bool
 noNs bs = isNothing $ L.find ('N' == ) bs 
 
@@ -114,7 +110,7 @@ main =  do contents <- L.getContents
                                  notHeader = ( (/= '>') .  L.head )
            let kmers = concatMap  (windows k) sequences
            let filteredKmers = filter noNs kmers
-           let canonicalKmers = fmap canonicalize filteredKmers
+           let canonicalKmers = fmap canonicalize  filteredKmers
 
            let encodedKmers = fmap encodeBases  canonicalKmers
            let mymap = buildMap encodedKmers
