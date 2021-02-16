@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 64c7fc2cb54c5587f9c2607b88169d3ea50c0bd5f8bc54d1d526932688203b72
+-- hash: 5941ef04bb8db7c3974cb80962981fd9e653c4627c5f2cd02e045bbb085ebe60
 
 name:           hskmer
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 
 library
   exposed-modules:
+      FastaParse
       Lib
   other-modules:
       Paths_hskmer
