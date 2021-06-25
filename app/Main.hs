@@ -40,6 +40,11 @@ import Data.Maybe
 -- * fusion
 -- * multi-threading
 
+-- advice on which container to use
+-- * https://github.com/haskell-perf/dictionaries
+-- * https://haskell-containers.readthedocs.io/en/latest/map.html
+-- * https://donsbot.wordpress.com/2009/09/26/very-fast-scalable-mutable-maps-and-hashes-for-haskell/
+
 k = 31
 -- https://twitter.com/Helkafen/status/701473861351526400
 windows n xs = filter ((>= k) . L.length) $ map (L.take n) (L.tails xs)
@@ -111,13 +116,8 @@ main =  do contents <- L.getContents
            let kmers = concatMap  (windows k) sequences
            let filteredKmers = filter noNs kmers
            let canonicalKmers = fmap canonicalize  filteredKmers
-
            let encodedKmers = fmap encodeBases  canonicalKmers
            let mymap = buildMap encodedKmers
-
-           print (IM.size mymap)
-
-           --putStrLn (show $ hist mymap)
            sequence_ $ showHist $ hist mymap
 
 
